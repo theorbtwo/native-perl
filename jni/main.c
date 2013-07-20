@@ -26,6 +26,9 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 
+#include <EXTERN.h>
+#include <perl.h>
+
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "native-activity", __VA_ARGS__))
 #define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "native-activity", __VA_ARGS__))
 
@@ -254,6 +257,15 @@ void android_main(struct android_app* state) {
         engine.state = *(struct saved_state*)state->savedState;
     }
 
+    // Init the perl intepreter
+    /* argc, argv, env */
+    PERL_SYS_INIT(0, NULL);
+    engine.perl_interp = perl_alloc();
+    perl_construct(engine.perl_interp);
+    PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+    perl_parse(engine.perl_interp, NULL, 0, NULL, (char **)NULL);
+    
+
     // loop waiting for stuff to do.
 
     while (1) {
@@ -289,6 +301,9 @@ void android_main(struct android_app* state) {
             // Check if we are exiting.
             if (state->destroyRequested != 0) {
                 engine_term_display(&engine);
+                perl_destruct(engine.perl_interp);
+                perl_free(engine.perl_interp);
+                PERL_SYS_TERM();
                 return;
             }
         }
