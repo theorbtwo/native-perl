@@ -257,12 +257,18 @@ void android_main(struct android_app* state) {
         engine.state = *(struct saved_state*)state->savedState;
     }
 
+    char *fake_argv[] = { "perl-native", "-e", "0", NULL };
+
     // Init the perl intepreter
     /* argc, argv, env */
-    PERL_SYS_INIT(0, NULL);
+    LOGW("will perl_sys_init\n");
+    PERL_SYS_INIT3(3, fake_argv, NULL);
+    LOGW("will perl_alloc\n");
     engine.perl_interp = perl_alloc();
+    LOGW("will perl_construct\n");
     perl_construct(engine.perl_interp);
     PL_exit_flags |= PERL_EXIT_DESTRUCT_END;
+    LOGW("will perl_parse\n");
     perl_parse(engine.perl_interp, NULL, 0, NULL, (char **)NULL);
     
 
